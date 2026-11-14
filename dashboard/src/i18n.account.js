@@ -1,0 +1,168 @@
+// Strings for account safety: terms consent, translated error messages, session
+// and data controls, email change, API keys, resending the verification link.
+// One file on purpose, so it can change without touching the other dictionaries.
+import { extendDictionary } from './i18n';
+
+const vi = {
+  // Terms consent (register form, Google button)
+  'terms.accept.pre': 'Tôi đồng ý với',
+  'terms.tos': 'Điều khoản sử dụng',
+  'terms.tos.short': 'Điều khoản',
+  'terms.and': 'và',
+  'terms.privacy': 'Chính sách riêng tư',
+  'terms.google.pre': 'Tiếp tục với Google nghĩa là bạn đồng ý với',
+
+  // Error messages (by server error code)
+  'err.terms_required': 'Bạn cần đồng ý với Điều khoản sử dụng và Chính sách riêng tư để tạo tài khoản.',
+  'err.disposable_email': 'Email dùng một lần không được chấp nhận. Hãy dùng email thật của bạn.',
+  'err.common_password': 'Mật khẩu này quá phổ biến nên dễ bị đoán. Hãy chọn mật khẩu khác.',
+  'err.password_too_long': 'Mật khẩu quá dài. Hãy dùng mật khẩu ngắn hơn.',
+  'err.invalid_input': 'Thông tin chưa hợp lệ. Hãy kiểm tra lại các trường rồi thử lại.',
+  'err.invalid_token': 'Liên kết không hợp lệ hoặc đã hết hạn.',
+  'err.unauthenticated': 'Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại.',
+  'err.same_email': 'Đây đã là email hiện tại của bạn.',
+  'err.mail_off': 'Máy chủ chưa bật gửi email nên chưa thực hiện được. Hãy liên hệ hỗ trợ.',
+  'err.cancel_failed': 'Không huỷ được gói thanh toán bằng thẻ nên chưa xoá tài khoản. Thử lại sau ít phút hoặc liên hệ hỗ trợ.',
+  'err.plan_required': 'Gói của bạn chưa có quyền dùng tính năng này.',
+  'err.too_many_keys': 'Bạn đã đạt tối đa 10 key. Hãy thu hồi một key cũ trước.',
+  'err.network': 'Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.',
+  'err.unavailable': 'Máy chủ đang bận. Hãy thử lại sau ít phút.',
+
+  // Session and data
+  'account.sessions.title': 'Thiết bị và dữ liệu',
+  'account.sessions.sub': 'Đăng xuất khỏi mọi nơi đang mở tài khoản này, hoặc tải về bản sao dữ liệu của bạn.',
+  'account.logoutall': 'Đăng xuất mọi thiết bị',
+  'account.logoutall.done': 'Đã đăng xuất mọi thiết bị khác. Thiết bị này vẫn đăng nhập.',
+  'account.export': 'Tải dữ liệu của tôi',
+  'account.export.done': 'Đã tải xuống viralshorts-my-data.json.',
+
+  // Change email
+  'account.email.title': 'Đổi email',
+  'account.email.sub': 'Chúng tôi gửi liên kết xác nhận tới địa chỉ mới. Email chỉ đổi sau khi bạn bấm liên kết.',
+  'account.email.new': 'Email mới',
+  'account.email.password': 'Mật khẩu hiện tại',
+  'account.email.confirm': 'Gõ email hiện tại để xác nhận',
+  'account.email.cta': 'Gửi liên kết xác nhận',
+  'account.email.wrong': 'Email xác nhận chưa đúng.',
+  'account.email.sent': 'Đã gửi liên kết xác nhận tới {email}. Email chỉ đổi sau khi bạn bấm liên kết. Sau đó bạn cần đăng nhập lại.',
+
+  // API keys
+  'account.api.section': 'API và AI Agent',
+  'apikeys.title': 'API key',
+  'apikeys.sub': 'Dùng key để gọi API hoặc nối AI Agent (Claude, ChatGPT, n8n…) vào tài khoản của bạn.',
+  'apikeys.name': 'Tên key (tuỳ chọn)',
+  'apikeys.name.ph': 'Ví dụ: n8n, Claude Desktop',
+  'apikeys.create': 'Tạo key',
+  'apikeys.empty': 'Chưa có key nào.',
+  'apikeys.unnamed': 'Key không tên',
+  'apikeys.created': 'Tạo {date}',
+  'apikeys.lastused': 'Dùng lần cuối {date}',
+  'apikeys.neverused': 'Chưa dùng',
+  'apikeys.revoke': 'Thu hồi',
+  'apikeys.revoke.confirm': 'Thu hồi key "{name}"? Mọi ứng dụng đang dùng key này sẽ ngừng hoạt động ngay.',
+  'apikeys.new.title': 'Key mới của bạn',
+  'apikeys.new.warn': 'Hãy lưu key này ngay bây giờ. Vì lý do bảo mật, bạn sẽ không xem lại được nó.',
+  'apikeys.copy': 'Sao chép',
+  'apikeys.copied': 'Đã chép',
+  'apikeys.saved': 'Tôi đã lưu key',
+  'apikeys.upgrade': 'Gói của bạn chưa có quyền dùng API. Nâng cấp để tạo key.',
+  'apikeys.upgrade.cta': 'Xem các gói',
+  'apikeys.usage.title': 'Cách dùng',
+  'apikeys.usage.api': 'Gửi key trong header của mỗi yêu cầu API:',
+  'apikeys.usage.mcp': 'Địa chỉ MCP cho AI Agent (cùng header Authorization):',
+
+  // Verification link
+  'verify.mail_off': 'Máy chủ chưa bật gửi email nên chưa gửi được liên kết. Hãy liên hệ hỗ trợ.',
+  'verify.already': 'Email của bạn đã được xác nhận rồi.',
+  'auth.verify.done': 'Email đã được xác nhận.',
+  'auth.verify.relogin': 'Nếu bạn vừa đổi email, hãy đăng nhập lại bằng địa chỉ mới.',
+  'auth.verify.resend.sub': 'Nhập email đã đăng ký để nhận liên kết xác nhận mới.',
+  'auth.verify.resend.cta': 'Gửi lại liên kết xác nhận',
+  'auth.verify.resend.sent': 'Nếu email này có tài khoản chưa xác minh, chúng tôi đã gửi liên kết mới. Kiểm tra cả thư mục spam.',
+
+  // After the account is erased
+  'deleted.title': 'Tài khoản đã được xoá',
+  'deleted.body': 'Tài khoản của bạn và các dự án đã được xoá. Nếu email đã được cấu hình, bạn sẽ nhận một email xác nhận.',
+  'deleted.welcome': 'Bạn luôn có thể quay lại: đăng ký lại bằng cùng địa chỉ sẽ tạo một tài khoản mới, trống.',
+  'deleted.back': 'Về ViralShorts',
+};
+
+const en = {
+  'terms.accept.pre': 'I agree to the',
+  'terms.tos': 'Terms of Use',
+  'terms.tos.short': 'Terms',
+  'terms.and': 'and',
+  'terms.privacy': 'Privacy Policy',
+  'terms.google.pre': 'By continuing with Google you agree to the',
+
+  'err.terms_required': 'You need to accept the Terms of Use and the Privacy Policy to create an account.',
+  'err.disposable_email': 'Disposable email addresses are not accepted. Please use your real email.',
+  'err.common_password': 'This password is too common and easy to guess. Please choose another one.',
+  'err.password_too_long': 'That password is too long. Please use a shorter one.',
+  'err.invalid_input': 'Some details are not valid. Check the fields and try again.',
+  'err.invalid_token': 'This link is invalid or has expired.',
+  'err.unauthenticated': 'Your session has expired. Please sign in again.',
+  'err.same_email': 'This is already your current email.',
+  'err.mail_off': 'Email sending is not set up on this server, so this could not be done. Contact support.',
+  'err.cancel_failed': 'We could not cancel your card subscription, so your account was not deleted. Try again in a few minutes or contact support.',
+  'err.plan_required': 'Your plan does not include this feature.',
+  'err.too_many_keys': 'You have reached the limit of 10 keys. Revoke an old key first.',
+  'err.network': 'Could not reach the server. Check your connection and try again.',
+  'err.unavailable': 'The server is busy. Please try again in a few minutes.',
+
+  'account.sessions.title': 'Devices and data',
+  'account.sessions.sub': 'Sign out everywhere this account is open, or download a copy of your data.',
+  'account.logoutall': 'Sign out of all devices',
+  'account.logoutall.done': 'Signed out of every other device. This one stays signed in.',
+  'account.export': 'Download my data',
+  'account.export.done': 'Downloaded viralshorts-my-data.json.',
+
+  'account.email.title': 'Change email',
+  'account.email.sub': 'We send a confirmation link to the new address. Your email only changes after you click it.',
+  'account.email.new': 'New email',
+  'account.email.password': 'Current password',
+  'account.email.confirm': 'Type your current email to confirm',
+  'account.email.cta': 'Send confirmation link',
+  'account.email.wrong': 'That confirmation email is not correct.',
+  'account.email.sent': 'We sent a confirmation link to {email}. Your email only changes after you click it. You will then need to sign in again.',
+
+  'account.api.section': 'API and AI agents',
+  'apikeys.title': 'API keys',
+  'apikeys.sub': 'Use a key to call the API or connect an AI agent (Claude, ChatGPT, n8n…) to your account.',
+  'apikeys.name': 'Key name (optional)',
+  'apikeys.name.ph': 'e.g. n8n, Claude Desktop',
+  'apikeys.create': 'Create key',
+  'apikeys.empty': 'No keys yet.',
+  'apikeys.unnamed': 'Unnamed key',
+  'apikeys.created': 'Created {date}',
+  'apikeys.lastused': 'Last used {date}',
+  'apikeys.neverused': 'Never used',
+  'apikeys.revoke': 'Revoke',
+  'apikeys.revoke.confirm': 'Revoke the key "{name}"? Every app using it stops working immediately.',
+  'apikeys.new.title': 'Your new key',
+  'apikeys.new.warn': 'Store this key now. For security reasons you will not be able to see it again.',
+  'apikeys.copy': 'Copy',
+  'apikeys.copied': 'Copied',
+  'apikeys.saved': 'I have stored the key',
+  'apikeys.upgrade': 'Your plan does not include API access. Upgrade to create keys.',
+  'apikeys.upgrade.cta': 'See plans',
+  'apikeys.usage.title': 'How to use it',
+  'apikeys.usage.api': 'Send the key in the header of every API request:',
+  'apikeys.usage.mcp': 'MCP address for AI agents (same Authorization header):',
+
+  'verify.mail_off': 'Email sending is not set up on this server, so the link could not be sent. Contact support.',
+  'verify.already': 'Your email is already verified.',
+  'auth.verify.done': 'Email verified.',
+  'auth.verify.relogin': 'If you just changed your email, sign in again with the new address.',
+  'auth.verify.resend.sub': 'Enter the email you signed up with to get a new confirmation link.',
+  'auth.verify.resend.cta': 'Resend confirmation link',
+  'auth.verify.resend.sent': 'If this email has an unverified account, we sent a new link. Check your spam folder too.',
+
+  'deleted.title': 'Your account is deleted',
+  'deleted.body': 'Your account and projects have been deleted. If email is configured, you will receive a confirmation email.',
+  'deleted.welcome': 'You are welcome back any time: signing up again with the same address starts a brand-new, empty account.',
+  'deleted.back': 'Back to ViralShorts',
+};
+
+extendDictionary('vi', vi);
+extendDictionary('en', en);

@@ -1,0 +1,69 @@
+# ViralShorts - Caddy reverse proxy with automatic HTTPS (Let's Encrypt).
+# Used by docker-compose.prod.yml. DOMAIN, ACME_EMAIL and MAX_UPLOAD arrive as
+# environment variables of the caddy container (see the compose file / .env).
+#
+# Before the first start: the DNS A/AAAA record of DOMAIN must point at this VPS
+# and ports 80 + 443 (tcp, and 443/udp for HTTP/3) must be reachable from the
+# internet, otherwise certificate issuance fails.
+
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	# Security headers for everything this host serves (static site and API alike).
+	# HSTS tells browsers to use HTTPS only; keep it once the certificate works.
+	# No Content-Security-Policy here on purpose: the dashboard loads Google sign-in
+	# and the consent-gated analytics script, and a wrong policy would break them.
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+		-Server
+	}
+
+	# --- Backend (FastAPI) -------------------------------------------------
+	# Everything the dashboard's dev proxy sends to the backend
+	# (dashboard/vite.config.js): /api, /videos, /thumbnails, /gallery, /video.
+	# /mcp and /health* are served by the same app.
+	@backend path /api/* /videos/* /thumbnails/* /gallery /gallery/* /video/* /mcp /mcp/* /health /health/*
+	handle @backend {
+		# Source videos are uploaded through /api/process: raise the body limit.
+		request_body {
+			max_size {$MAX_UPLOAD:2GB}
+		}
+		# Only the JSON API is worth compressing; clips are already compressed.
+		@json path /api/*
+		encode @json zstd gzip
+		reverse_proxy backend:8000 {
+			# Stream big downloads / status polling without buffering.
+			flush_interval -1
+			# Used by the compose healthcheck too; drop the upstream if unhealthy.
+			health_uri /health/ready
+			health_interval 10s
+			health_timeout 3s
+		}
+	}
+
+	# --- Dashboard (static nginx) -----------------------------------------
+	# The renderer service is internal only: the backend calls it directly on
+	# the compose network and it is intentionally NOT routed here.
+	handle {
+		encode zstd gzip
+		reverse_proxy frontend:80
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}
+
+# Optional: serve www.<DOMAIN> and send it to the apex. Needs a DNS record for
+# www as well. Uncomment after adding the record (Caddy also gets its cert).
+#
+# www.{$DOMAIN} {
+# 	redir https://{$DOMAIN}{uri} permanent
+# }

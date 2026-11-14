@@ -1,0 +1,393 @@
+/* ViralShorts: shared component classes. Colours come from tokens.css only. */
+/* Noto Serif (hook-overlay font, burned into videos — not UI) is self-hosted
+   with the rest of the faces in public/fonts.css: no request to Google. */
+@import './tokens.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    /* Everything is rem-based (text, spacing, widths), so this one value scales the whole
+       interface. 16px read small on desktop monitors. */
+    font-size: 106.25%;
+  }
+  @media (min-width: 768px) {
+    html { font-size: 112.5%; }
+  }
+  /* Big monitors: the reference product's UI reads larger there, so scale up once
+     more instead of leaving small labels tiny on a 1080p+ screen. */
+  @media (min-width: 1280px) {
+    html { font-size: 118.75%; }
+  }
+  @media (min-width: 1680px) {
+    html { font-size: 125%; }
+  }
+
+  body {
+    @apply bg-paper text-ink2 antialiased;
+    font-family: var(--font-body);
+    /* Inter's contextual alternates and a single-storey "a"-free default read
+       cleaner for Vietnamese diacritics than the display cut. */
+    font-feature-settings: 'calt' 1, 'ss03' 0;
+    /* Inter is a variable font, so 450 is real. Plain 400 looked thin next to the
+       reference (500) once the text is grey; this is the middle ground. */
+    font-weight: 450;
+    line-height: 1.55;
+    /* A single stray wide child (a log line, a long URL) used to make the whole
+       app pan sideways on a phone. Panes that really are wide scroll on their own. */
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4 {
+    color: var(--color-ink);
+    font-weight: 600;
+  }
+
+  /* Touch: iOS zooms the page whenever a focused field renders below 16px, and
+     it never zooms back out. Lift every text control to 16px on small screens —
+     Tailwind's text-sm/xs on inputs is what triggers it. */
+  @media (max-width: 639px) {
+    input:not([type='checkbox']):not([type='radio']):not([type='range']),
+    select,
+    textarea {
+      font-size: 16px;
+    }
+  }
+
+  /* Kill the 300ms tap flash on Android/iOS — it reads as lag on every button. */
+  button, a, [role='button'] {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  ::selection {
+    background: oklch(var(--c-ink) / 0.18);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+    transition: none;
+  }
+}
+
+@layer components {
+  /* Card: cream surface, hairline, soft elevation. */
+  .card,
+  .glass-panel {
+    background: var(--color-paper-2);
+    border: 1px solid var(--color-rule);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+  }
+
+  .card-hover {
+    transition: transform var(--dur-short) var(--ease-out),
+                border-color var(--dur-short) var(--ease-out),
+                box-shadow var(--dur-short) var(--ease-out),
+                background-color var(--dur-short) var(--ease-out);
+  }
+  .card-hover:hover {
+    transform: translateY(-2px);
+    border-color: oklch(var(--c-brass) / 0.45);
+    box-shadow: var(--shadow-pop);
+  }
+
+  /* small section label: quiet, uppercase, tracked */
+  .eyebrow {
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: var(--tracking-micro);
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  /* value chip for machine data: 00:42 · 9:16 */
+  .readout {
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  .input-field {
+    @apply w-full text-sm text-ink2;
+    background: var(--color-paper);
+    border: 1px solid var(--color-rule-2);
+    border-radius: var(--radius-input);
+    padding: 0.7rem 1rem;
+    outline: none;
+    transition: border-color var(--dur-short) var(--ease-out), box-shadow var(--dur-short) var(--ease-out);
+  }
+  .input-field::placeholder { color: var(--color-muted); opacity: 0.8; }
+  .input-field:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px oklch(var(--c-brass) / 0.18);
+  }
+
+  /* primary: brand gradient pill with a soft glow */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-semibold;
+    background: var(--gradient-brand);
+    color: var(--color-accent-ink);
+    border-radius: 999px;
+    box-shadow: var(--shadow-cta);
+    transition: filter var(--dur-short) var(--ease-out), transform var(--dur-short) var(--ease-out),
+                box-shadow var(--dur-short) var(--ease-out);
+  }
+  .btn-primary:hover { filter: brightness(1.08) saturate(1.05); }
+  .btn-primary:active { transform: translateY(1px); box-shadow: none; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; filter: none; }
+
+  /* white/neutral pill for a second action beside btn-primary */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-semibold text-ink;
+    background: var(--color-paper);
+    border: 1px solid var(--color-rule-2);
+    border-radius: 999px;
+    box-shadow: var(--shadow-card);
+    transition: border-color var(--dur-short) var(--ease-out), background-color var(--dur-short) var(--ease-out);
+  }
+  .btn-secondary:hover { border-color: oklch(var(--c-brass) / 0.55); background: var(--color-accent-soft); }
+  .btn-secondary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  /* filter / category pill; add aria-pressed or .is-active for the selected state */
+  .chip {
+    @apply inline-flex items-center gap-1.5 px-3.5 py-1.5 text-sm text-ink2;
+    background: var(--color-paper-2);
+    border: 1px solid var(--color-rule);
+    border-radius: 999px;
+    transition: background-color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out),
+                color var(--dur-short) var(--ease-out);
+  }
+  .chip:hover { border-color: var(--color-rule-2); color: var(--color-ink); }
+  .chip[aria-pressed='true'], .chip.is-active {
+    color: var(--color-accent);
+    background: var(--color-accent-soft);
+    border-color: oklch(var(--c-brass) / 0.4);
+    font-weight: 600;
+  }
+
+  /* underline tab */
+  .tab {
+    @apply px-4 py-2.5 text-sm text-muted -mb-px border-b-2 border-transparent;
+    transition: color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out);
+  }
+  .tab:hover { color: var(--color-ink); }
+  .tab[aria-selected='true'], .tab.is-active { color: var(--color-ink); border-color: var(--color-accent); font-weight: 600; }
+
+  /* loading placeholder: grey block with a moving highlight */
+  .skeleton {
+    background: linear-gradient(90deg, var(--color-paper-3) 0%, oklch(var(--c-ink) / 0.1) 50%, var(--color-paper-3) 100%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.4s ease-in-out infinite;
+    border-radius: 10px;
+  }
+  @keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* empty state: dashed frame, centred content */
+  .empty-state {
+    @apply flex flex-col items-center justify-center text-center gap-3 px-6 py-14;
+    border: 1.5px dashed var(--color-rule-2);
+    border-radius: var(--radius-card);
+    background: oklch(var(--c-brass) / 0.03);
+  }
+
+  /* gradient text for one hero word */
+  .text-gradient {
+    background: var(--gradient-brand);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* secondary: page-colour pill with a hairline */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-medium text-ink;
+    background: var(--color-paper);
+    border: 1px solid var(--color-rule-2);
+    border-radius: 999px;
+    transition: background-color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out);
+  }
+  .btn-ghost:hover { background: var(--color-paper-3); }
+  .btn-ghost:active { transform: translateY(1px); }
+  .btn-ghost:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .btn-quiet {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm text-ink2;
+    background: var(--color-paper-3);
+    border-radius: 999px;
+    transition: background-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out);
+  }
+  .btn-quiet:hover { background: oklch(var(--c-ink) / 0.12); color: var(--color-ink); }
+  .btn-quiet:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm;
+    color: var(--color-danger);
+    border: 1px solid color-mix(in oklab, var(--color-danger) 40%, transparent);
+    border-radius: 999px;
+    transition: background-color var(--dur-short) var(--ease-out);
+  }
+  .btn-danger:hover { background: color-mix(in oklab, var(--color-danger) 10%, transparent); }
+
+  .badge-ok, .badge-warn, .badge-danger, .badge-brass, .badge-float {
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    padding: 3px 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .badge-ok     { color: var(--color-ok);     background: color-mix(in oklab, var(--color-ok) 12%, transparent); }
+  .badge-warn   { color: var(--color-warn);   background: color-mix(in oklab, var(--color-warn) 14%, transparent); }
+  .badge-danger { color: var(--color-danger); background: color-mix(in oklab, var(--color-danger) 12%, transparent); }
+  .badge-brass  { color: var(--color-accent); background: var(--color-accent-soft); }
+  /* Floating badge overlapping a card border ("most popular"): needs an OPAQUE
+     base or the border line shows straight through the pill. */
+  .badge-float  {
+    color: var(--color-ink);
+    background: color-mix(in oklab, var(--color-ink) 8%, var(--color-paper));
+  }
+
+  /* narrow phones: tighter pill padding so CTA labels stay on one line */
+  @media (max-width: 379px) {
+    .btn-primary, .btn-ghost { padding-left: 1rem; padding-right: 1rem; }
+  }
+
+  /* Touch: 44px is the Apple/WCAG hit-target floor. The quiet/danger pills sit
+     at ~34px from their padding alone, which is a miss on a phone. Only the
+     shared pills are lifted — blanket-sizing every <button> would stretch the
+     icon rows inside the clip cards. */
+  @media (pointer: coarse) {
+    .btn-primary, .btn-ghost, .btn-quiet, .btn-danger { min-height: 44px; }
+  }
+
+  /* App shell helpers ------------------------------------------------------ */
+
+  /* Pads past the iOS home indicator (needs viewport-fit=cover in index.html).
+     A spacer rather than `padding-bottom`: Tailwind's utilities layer is emitted
+     after components, so a `py-4` on the same element would win outright and
+     silently drop the inset. This adds to whatever padding is already there. */
+  .safe-bottom::after {
+    content: '';
+    display: block;
+    width: 100%;
+    height: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Phone type: slightly larger micro labels on a small bright screen. */
+  @media (max-width: 639px) {
+    .readout { font-size: 0.75rem; }
+    .eyebrow { font-size: 0.75rem; }
+  }
+}
+
+/* Large headings: semibold with slightly tight tracking (the reference product
+   uses 600 for headings). A light 300 here read as thin and hard to scan. */
+.font-display {
+  font-weight: 600;
+  letter-spacing: var(--tracking-display);
+}
+
+/* The old UI lowercased every button, nav label and title. Sentence case is the
+   new convention; this switches the utility off globally instead of editing
+   hundreds of class lists. TEMPORARY: remove the `lowercase` classes over time. */
+.lowercase {
+  text-transform: none;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-rule-2);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--color-rule);
+}
+
+/* Custom Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scan {
+  0% {
+    top: 0%;
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+@keyframes scan-overlay {
+  0% {
+    top: -20%;
+  }
+
+  100% {
+    top: 100%;
+  }
+}
+
+@keyframes filament-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.86; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* A bar that says "working" without pretending to know how far along it is. */
+.indeterminate-bar { position: relative; overflow: hidden; }
+.indeterminate-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  border-radius: 9999px;
+  background: oklch(var(--c-brass));
+  animation: indeterminate-slide 1.4s ease-in-out infinite;
+}
+@keyframes indeterminate-slide {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .indeterminate-bar::after { animation: none; width: 100%; opacity: .35; }
+}

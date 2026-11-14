@@ -1,0 +1,143 @@
+/* ViralShorts design tokens: light by default, dark under [data-theme="dark"].
+ *
+ * Every colour is a CHANNEL triplet (--c-*) so Tailwind can add an alpha
+ * (`bg-paper2/60` -> oklch(var(--c-paper2) / 0.6)) and so one block per theme is
+ * the only place a colour is ever written down. The --color-* variables are the
+ * same colours as ready-to-use values for plain CSS.
+ *
+ * Look: warm off-white page (or near-black in dark), cream cards, hairline
+ * rules, soft elevation, and ONE brand accent (violet -> pink gradient) for the
+ * primary action, selected states and the clip score. ok / warn / danger carry
+ * hue for state only.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* surfaces */
+  --c-paper:  99% 0.002 20;     /* page            ~ #FDFCFC */
+  --c-paper2: 96.2% 0.003 70;   /* card            ~ #F5F3F1 */
+  --c-paper3: 93% 0.004 70;     /* hover / quiet   ~ #ECEAE8 */
+
+  /* text */
+  --c-ink:   14% 0 0;           /* headings, primary */
+  --c-ink2:  24% 0 0;           /* body */
+  --c-muted: 42% 0.004 70;      /* secondary, >= 4.5:1 on paper and paper2 */
+
+  /* Brand accent (violet). The token keeps its old name "brass" because ~240
+     class names across 55 files already mean "the primary / selected colour".
+     brassink is text ON an accent fill. */
+  --c-brass:    55% 0.24 285;
+  --c-brassink: 99% 0.005 285;
+  --c-brass2:   64% 0.22 340;   /* second stop of the brand gradient (pink) */
+  --c-coral:    60% 0.19 25;
+
+  /* clip score scale: >= 80 strong, 60-79 ok, below that weak */
+  --c-score-hi:  56% 0.15 150;
+  --c-score-mid: 62% 0.15 75;
+  --c-score-lo:  58% 0.2 25;
+
+  /* elevation */
+  --shadow-card: 0 1px 2px oklch(20% 0.02 285 / 0.06), 0 4px 14px oklch(20% 0.02 285 / 0.05);
+  --shadow-pop:  0 8px 30px oklch(20% 0.04 285 / 0.16), 0 2px 6px oklch(20% 0.02 285 / 0.08);
+  --shadow-cta:  0 6px 18px oklch(55% 0.24 285 / 0.35);
+
+  /* states (text-safe on light surfaces) */
+  --c-ok:     52% 0.12 150;
+  --c-warn:   56% 0.13 70;
+  --c-danger: 54% 0.21 25;
+
+  /* type (Inter is wired in public/fonts.css; system stack until it loads) */
+  --font-display: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --text-display: clamp(2.25rem, 4vw + 1rem, 4rem);
+  --tracking-display: -0.02em;
+  --tracking-micro: 0.06em;
+
+  /* geometry */
+  --radius-card: 16px;
+  --radius-input: 12px;
+
+  /* motion */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-short: 220ms;
+  --dur-reveal: 600ms;
+  --dur-pulse: 4s;
+}
+
+/* Derived colours are re-declared for every theme root: a custom property
+   that references var(--c-*) is resolved where it is DECLARED, so declaring
+   these only on :root would freeze them at the light values. */
+:root,
+:root[data-theme="dark"],
+[class*="bg-black"]:not(.fixed),
+.surface-dark {
+  /* rules are the ink colour at low alpha, so they work on any surface */
+  --color-rule:   oklch(var(--c-ink) / 0.09);
+  --color-rule-2: oklch(var(--c-ink) / 0.16);
+  --rule-blueprint: oklch(var(--c-ink) / 0.05);
+
+  --color-paper:  oklch(var(--c-paper));
+  --color-paper-2: oklch(var(--c-paper2));
+  --color-paper-3: oklch(var(--c-paper3));
+  --color-ink:    oklch(var(--c-ink));
+  --color-ink-2:  oklch(var(--c-ink2));
+  --color-muted:  oklch(var(--c-muted));
+  --color-accent: oklch(var(--c-brass));
+  --color-accent-ink: oklch(var(--c-brassink));
+  --color-accent-2: oklch(var(--c-coral));
+  --color-glow: oklch(var(--c-brass) / 0.25);
+  --color-paper-emit: transparent;
+  --color-focus: oklch(var(--c-brass) / 0.8);
+  --color-accent-soft: oklch(var(--c-brass) / 0.1);
+  --gradient-brand: linear-gradient(135deg, oklch(var(--c-brass)), oklch(var(--c-brass2)));
+  --color-score-hi:  oklch(var(--c-score-hi));
+  --color-score-mid: oklch(var(--c-score-mid));
+  --color-score-lo:  oklch(var(--c-score-lo));
+  --color-ok:     oklch(var(--c-ok));
+  --color-danger: oklch(var(--c-danger));
+  --color-warn:   oklch(var(--c-warn));
+}
+
+/* Dark theme. `.surface-dark` re-applies it to a subtree. Anything painted with a
+   bg-black* utility is automatically such a subtree (video frames, the pills and
+   scan lines on top of them), so its text stays readable in the light theme.
+   Fixed full-screen overlays are excluded: they wrap a themed modal panel. */
+:root[data-theme="dark"],
+[class*="bg-black"]:not(.fixed),
+.surface-dark {
+  color-scheme: dark;
+
+  --c-paper:  12% 0.004 70;     /* ~ #0C0B0A */
+  --c-paper2: 17% 0.004 70;
+  --c-paper3: 22% 0.005 70;
+
+  --c-ink:   98% 0 0;
+  --c-ink2:  90% 0.002 70;
+  --c-muted: 72% 0.005 70;
+
+  --c-brass:    63% 0.22 285;
+  --c-brassink: 99% 0.005 285;
+  --c-brass2:   70% 0.2 340;
+  --c-coral:    68% 0.16 18;
+
+  --c-score-hi:  76% 0.16 150;
+  --c-score-mid: 80% 0.15 80;
+  --c-score-lo:  70% 0.18 25;
+
+  --shadow-card: 0 1px 2px oklch(0% 0 0 / 0.4), 0 4px 14px oklch(0% 0 0 / 0.25);
+  --shadow-pop:  0 10px 34px oklch(0% 0 0 / 0.55), 0 2px 6px oklch(0% 0 0 / 0.35);
+  --shadow-cta:  0 6px 20px oklch(63% 0.22 285 / 0.4);
+
+  --c-ok:     75% 0.12 150;
+  --c-warn:   80% 0.14 75;
+  --c-danger: 68% 0.18 25;
+}
+
+/* A .surface-dark subtree must also paint its own text colour, otherwise it
+   inherits the light theme's near-black from the parent. */
+[class*="bg-black"]:not(.fixed),
+.surface-dark {
+  color: var(--color-ink);
+}

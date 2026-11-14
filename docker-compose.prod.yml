@@ -1,0 +1,169 @@
+# ViralShorts - production stack for ONE VPS (Caddy + backend + dashboard + renderer).
+#
+#   cp .env.example .env        # then fill in the values (see ops/README.md)
+#   docker compose -f docker-compose.prod.yml --env-file .env up -d --build
+#
+# Not for local development: use docker-compose.yml for that. Does not use
+# cloud/ or docker-compose.cloud.yml, and BILLING_ENABLED stays off - payments
+# are the studio/ ones (STUDIO_PAID, Stripe / PayOS) and are configured in .env.
+#
+# Only Caddy publishes ports (80/443). backend, frontend and renderer are
+# reachable only on the internal compose network.
+#
+# Required in .env (compose refuses to start without them): DOMAIN, ACME_EMAIL,
+# STUDIO_SECRET. Every other secret (GEMINI_API_KEY, STRIPE_*, PAYOS_*, ...) is
+# read by the backend straight from .env via env_file - nothing real is written here.
+
+x-backend-build: &backend-build
+  context: .
+  dockerfile: Dockerfile
+
+services:
+  # One-shot: make the bind-mounted state folders writable by the non-root user
+  # the backend runs as (the image creates `appuser`; a fresh host folder is
+  # root-owned). Uses the backend image so the uid always matches.
+  volume-init:
+    build: *backend-build
+    image: viralshorts-backend:prod
+    user: root
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - mkdir -p /app/data /app/output /app/uploads /app/.cache/huggingface
+        && chown -R appuser:appuser /app/data /app/output /app/uploads /app/.cache/huggingface
+    volumes:
+      - ${STATE_DIR:-./state}/data:/app/data
+      - ${STATE_DIR:-./state}/output:/app/output
+      - ${STATE_DIR:-./state}/uploads:/app/uploads
+      - hf_cache:/app/.cache/huggingface
+    restart: "no"
+
+  backend:
+    build: *backend-build
+    image: viralshorts-backend:prod
+    container_name: viralshorts-backend
+    # Secrets (GEMINI_API_KEY, FAL_KEY, ELEVENLABS_API_KEY, GOOGLE_*, STRIPE_*,
+    # PAYOS_*, SMTP_*, ...) come from here. Values in `environment:` below win.
+    env_file: .env
+    environment:
+      # Own-accounts product mode. BILLING_ENABLED is deliberately off
+      # (app.py turns ACCOUNTS_ENABLED off when it is on); forced to 0 here so a
+      # stray value in .env cannot enable the cloud/ code path.
+      ACCOUNTS_ENABLED: "1"
+      BILLING_ENABLED: "0"
+      # Production switches on the strict checks: a weak STUDIO_SECRET stops the
+      # server from starting and CORS accepts only https://${DOMAIN}.
+      APP_ENV: production
+      STUDIO_SECRET: ${STUDIO_SECRET:?STUDIO_SECRET must be set in .env (openssl rand -hex 32)}
+      STUDIO_DB_PATH: /app/data/studio.db
+      # Public URLs derived from DOMAIN (single origin: Caddy serves dashboard
+      # and API on the same host, so no cross-origin setup is needed).
+      PUBLIC_API_URL: https://${DOMAIN:?DOMAIN must be set in .env}
+      FRONTEND_URL: https://${DOMAIN}
+      GOOGLE_REDIRECT_URI: https://${DOMAIN}/api/auth/google/callback
+      RENDER_SERVICE_URL: http://renderer:3100
+      JOB_RETENTION_SECONDS: ${JOB_RETENTION_SECONDS:-604800}
+      # Keep drain shorter than stop_grace_period below.
+      DRAIN_TIMEOUT_SECONDS: ${DRAIN_TIMEOUT_SECONDS:-840}
+    volumes:
+      # State only - no source bind mount. Back up ${STATE_DIR}/data (ops/backup_studio.sh).
+      - ${STATE_DIR:-./state}/data:/app/data
+      - ${STATE_DIR:-./state}/output:/app/output
+      - ${STATE_DIR:-./state}/uploads:/app/uploads
+      # Whisper / ASR models: avoid re-downloading on every container rebuild.
+      - hf_cache:/app/.cache/huggingface
+    expose:
+      - "8000"
+    depends_on:
+      volume-init:
+        condition: service_completed_successfully
+    # /health/ready answers 503 once SIGTERM arrives (drain); see Dockerfile.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:8000/health/ready > /dev/null || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 60s
+    stop_grace_period: 900s
+    restart: unless-stopped
+    logging: &logging
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  frontend:
+    build:
+      context: ./dashboard
+      target: prod
+      args:
+        # Empty = same origin (Caddy routes /api, /videos, ... to the backend).
+        VITE_API_URL: ""
+        # Absolute origin for canonical, og:url, sitemap.xml and llms.txt.
+        SITE_URL: https://${DOMAIN:?DOMAIN must be set in .env}
+        VITE_OPENPANEL_API_URL: ${VITE_OPENPANEL_API_URL:-}
+        VITE_OPENPANEL_CLIENT_ID: ${VITE_OPENPANEL_CLIENT_ID:-}
+    image: viralshorts-frontend:prod
+    container_name: viralshorts-frontend
+    environment:
+      # Substituted into dashboard/nginx.conf by the nginx image's template step.
+      DOMAIN: ${DOMAIN}
+    expose:
+      - "80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/ || exit 1"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+    logging: *logging
+
+  renderer:
+    build:
+      context: .
+      dockerfile: render-service/Dockerfile
+    image: viralshorts-renderer:prod
+    container_name: viralshorts-renderer
+    environment:
+      REMOTION_BUNDLE_PATH: /app/remotion
+      OUTPUT_DIR: /output
+      PORT: "3100"
+    volumes:
+      - ${STATE_DIR:-./state}/output:/output
+    expose:
+      - "3100"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    logging: *logging
+
+  # Reverse proxy + automatic HTTPS (Let's Encrypt). Needs DNS for DOMAIN to
+  # point at this VPS and ports 80/443 open before the first start.
+  caddy:
+    image: caddy:2-alpine
+    container_name: viralshorts-caddy
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL must be set in .env (Let's Encrypt contact)}
+      # Max upload body (source videos). Keep in step with what you allow users.
+      MAX_UPLOAD: ${MAX_UPLOAD:-2GB}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data      # certificates: losing this volume re-issues them
+      - caddy_config:/config
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+    restart: unless-stopped
+    logging: *logging
+
+volumes:
+  hf_cache:
+  caddy_data:
+  caddy_config:

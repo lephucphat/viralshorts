@@ -60,3 +60,6 @@ data/
 
 # Team config with shared API keys (never commit)
 .env.team
+
+# Team zip (contains shared keys)
+dist-team/

@@ -57,3 +57,6 @@ data/
 .pipcache/
 .piptmp/
 *.log
+
+# Team config with shared API keys (never commit)
+.env.team
